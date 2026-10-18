@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабораторные работы №13 и №14</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f4f8;
+            color: #1e2a3a;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+            padding: 28px;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 2rem;
+            border-left: 5px solid #3b82f6;
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .tab {
+            padding: 10px 24px;
+            background: #f1f5f9;
+            border-radius: 24px 24px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        button, .file-label {
+            background-color: #3b82f6;
+            border: none;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        button:hover, .file-label:hover { background-color: #2563eb; transform: scale(1.02); }
+        .file-label input { display: none; }
+        textarea {
+            width: 100%;
+            height: 180px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 16px;
+            background: #fefce8;
+            resize: vertical;
+        }
+        .lang-select {
+            margin: 16px 0;
+            display: flex;
+            gap: 28px;
+            align-items: center;
+            background: #f8fafc;
+            padding: 8px 20px;
+            border-radius: 60px;
+            width: fit-content;
+        }
+        .lang-select label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; }
+        .analyze-btn { background-color: #10b981; font-size: 1rem; padding: 10px 24px; margin-top: 8px; }
+        .result { margin-top: 32px; border-top: 2px solid #e2e8f0; padding-top: 24px; }
+        .key { background: linear-gradient(135deg, #f1f5f9, #e6edf5); padding: 12px 20px; border-radius: 20px; font-size: 1.1rem; margin-bottom: 20px; }
+        .histogram-title { font-weight: 700; font-size: 1.2rem; margin: 20px 0 12px 0; }
+        .histogram-bars { margin-top: 10px; max-height: 400px; overflow-y: auto; }
+        .bar-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.85rem; }
+        .bar-label { width: 45px; font-weight: bold; font-family: monospace; font-size: 1.1rem; text-align: center; background: #f1f5f9; border-radius: 12px; padding: 2px 0; }
+        .bar-bg { flex: 1; background-color: #e2e8f0; border-radius: 30px; margin: 0 12px; overflow: hidden; height: 28px; }
+        .bar-fill { background: linear-gradient(90deg, #3b82f6, #60a5fa); height: 100%; width: 0%; border-radius: 30px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color: white; font-size: 0.75rem; font-weight: bold; transition: width 0.3s; }
+        .bar-percent { min-width: 60px; text-align: right; font-family: monospace; }
+        .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid white; border-radius: 50%; border-top-color: transparent; animation: spin 0.6s linear infinite; margin-left: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-message { background: #fee2e2; border-left: 5px solid #ef4444; padding: 10px 16px; border-radius: 14px; color: #b91c1c; }
+        footer { margin-top: 30px; text-align: center; font-size: 0.8rem; color: #64748b; }
+        .poly-result { background: #f8fafc; border-radius: 20px; padding: 16px; margin-top: 20px; }
+        .kasiski-item { background: white; border-radius: 16px; margin-bottom: 12px; padding: 12px; border-left: 4px solid #3b82f6; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔐 Криптоанализ: частотный (lab13) и полиалфавитный (lab14)</h1>
+
+    <!-- Вкладки -->
+    <div class="tabs">
+        <div class="tab active" data-tab="tab13">📊 Lab13: Частотный анализ</div>
+        <div class="tab" data-tab="tab14">🔁 Lab14: Полиалфавитный анализ</div>
+    </div>
+
+    <!-- Область для вкладки 13 -->
+    <div id="tab13" class="tab-content active">
+        <div class="toolbar">
+            <label class="file-label">📂 Загрузить файл <input type="file" id="fileInput13" accept=".txt"></label>
+            <button id="pasteBtn13">📋 Вставить из буфера</button>
+        </div>
+        <textarea id="ciphertext13" placeholder="Введите зашифрованный текст..."></textarea>
+        <div class="lang-select">
+            <label><input type="radio" name="lang13" value="en" checked> en English</label>
+            <label><input type="radio" name="lang13" value="ru"> 🇷🇺 Русский</label>
+        </div>
+        <button id="analyzeBtn13" class="analyze-btn">🔎 Выполнить частотный анализ</button>
+        <div class="result" id="result13" style="display: none;">
+            <div class="key" id="probableKey13"></div>
+            <div class="histogram-title">📊 Гистограмма частот букв</div>
+            <div id="histogramBars13" class="histogram-bars"></div>
+        </div>
+    </div>
+
+    <!-- Область для вкладки 14 -->
+    <div id="tab14" class="tab-content">
+        <div class="toolbar">
+            <label class="file-label">📂 Загрузить файл <input type="file" id="fileInput14" accept=".txt"></label>
+            <button id="pasteBtn14">📋 Вставить из буфера</button>
+        </div>
+        <textarea id="ciphertext14" placeholder="Введите зашифрованный текст (полиалфавитный шифр)..."></textarea>
+        <div class="lang-select">
+            <label><input type="radio" name="lang14" value="en" checked> en English</label>
+            <label><input type="radio" name="lang14" value="ru"> 🇷🇺 Русский</label>
+        </div>
+        <button id="analyzeBtn14" class="analyze-btn">🔎 Выполнить полиалфавитный анализ</button>
+        <div class="result" id="result14" style="display: none;">
+            <div class="key" id="keyLengthResult"></div>
+            <div class="key" id="keyResult"></div>
+            <div class="poly-result">
+                <h3>📐 Индекс совпадений (IC)</h3>
+                <p><strong>Общий IC текста:</strong> <span id="overallIC"></span></p>
+                <p><strong>Предполагаемая длина ключа по IC:</strong> <span id="icPeriod"></span></p>
+                <h3>🔁 Тест Казиски (повторяющиеся фрагменты)</h3>
+                <div id="kasiskiResults"></div>
+                <h3>📈 Автокорреляция</h3>
+                <p><strong>Предполагаемая длина ключа по автокорреляции:</strong> <span id="autocorrPeriod"></span></p>
+                <div id="autocorrPlot" style="font-size:0.8rem; max-height:200px; overflow-y:auto;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Общие утилиты
+    function escapeHtml(str) { return str.replace(/[&<>]/g, m => m==='&'?'&amp;':(m==='<'?'&lt;':'&gt;')); }
+
+    // ---------- LAB 13 ----------
+    const textarea13 = document.getElementById('ciphertext13');
+    const analyzeBtn13 = document.getElementById('analyzeBtn13');
+    const resultArea13 = document.getElementById('result13');
+    const probableKey13 = document.getElementById('probableKey13');
+    const histogramBars13 = document.getElementById('histogramBars13');
+
+    async function analyze13() {
+        const text = textarea13.value.trim();
+        const lang = document.querySelector('input[name="lang13"]:checked').value;
+        if (!text) { alert('Введите текст'); return; }
+        analyzeBtn13.innerHTML = 'Анализ... <span class="loader"></span>';
+        analyzeBtn13.disabled = true;
+        resultArea13.style.display = 'none';
+        histogramBars13.innerHTML = '';
+        try {
+            const resp = await fetch('/api/freqanalyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, lang })
+            });
+            if (!resp.ok) throw new Error('Ошибка сервера');
+            const data = await resp.json();
+            probableKey13.innerHTML = `🔑 Вероятный сдвиг: <strong>${data.probable_key}</strong>`;
+            const hist = data.histogram;
+            if (!hist || Object.keys(hist).length === 0) {
+                histogramBars13.innerHTML = '<div class="error-message">Нет букв</div>';
+            } else {
+                const entries = Object.entries(hist);
+                entries.sort((a,b) => b[1].percentage - a[1].percentage);
+                const maxP = entries[0][1].percentage;
+                for (const [ch, st] of entries) {
+                    const w = maxP>0 ? (st.percentage/maxP)*100 : 0;
+                    const bar = document.createElement('div');
+                    bar.className = 'bar-item';
+                    bar.innerHTML = `<div class="bar-label">${escapeHtml(ch)}</div>
+                                     <div class="bar-bg"><div class="bar-fill" style="width:${w}%;">${st.percentage.toFixed(1)}%</div></div>
+                                     <div class="bar-percent">${st.count}</div>`;
+                    histogramBars13.appendChild(bar);
+                }
+            }
+            resultArea13.style.display = 'block';
+        } catch(e) { alert('Ошибка: '+e.message); }
+        finally { analyzeBtn13.innerHTML = '🔎 Выполнить частотный анализ'; analyzeBtn13.disabled = false; }
+    }
+
+    // LAB13: файл, буфер
+    document.getElementById('fileInput13').addEventListener('change', e => { if(e.target.files[0]){ const r=new FileReader(); r.onload=ev=>textarea13.value=ev.target.result; r.readAsText(e.target.files[0]); } });
+    document.getElementById('pasteBtn13').addEventListener('click', async () => { try { textarea13.value = await navigator.clipboard.readText(); } catch(e){ alert('Ошибка буфера'); } });
+    analyzeBtn13.addEventListener('click', analyze13);
+
+    // ---------- LAB 14 ----------
+    const textarea14 = document.getElementById('ciphertext14');
+    const analyzeBtn14 = document.getElementById('analyzeBtn14');
+    const resultArea14 = document.getElementById('result14');
+    const keyLengthSpan = document.getElementById('keyLengthResult');
+    const keySpan = document.getElementById('keyResult');
+    const overallICSpan = document.getElementById('overallIC');
+    const icPeriodSpan = document.getElementById('icPeriod');
+    const kasiskiDiv = document.getElementById('kasiskiResults');
+    const autocorrPeriodSpan = document.getElementById('autocorrPeriod');
+    const autocorrPlotDiv = document.getElementById('autocorrPlot');
+
+    async function analyze14() {
+        const text = textarea14.value.trim();
+        const lang = document.querySelector('input[name="lang14"]:checked').value;
+        if (!text) { alert('Введите текст'); return; }
+        analyzeBtn14.innerHTML = 'Анализ... <span class="loader"></span>';
+        analyzeBtn14.disabled = true;
+        resultArea14.style.display = 'none';
+        try {
+            const resp = await fetch('/api/polyanalyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, lang })
+            });
+            if (!resp.ok) throw new Error('Ошибка сервера');
+            const data = await resp.json();
+            keyLengthSpan.innerHTML = `🔑 Предполагаемая длина ключа (консенсус): <strong>${data.key_length}</strong>`;
+            
+            // Если массив ключей есть, выводим их красивым списком
+            if (data.keys && data.keys.length > 0) {
+                keySpan.innerHTML = `🔐 Топ вероятных ключей:<br><strong>1. ${data.keys.join('<br>2. ').replace('2. ', '2. ').replace('2.', '3.', 2)}</strong>`; 
+                // Небольшой хак для нумерации, но лучше так:
+                const keysHtml = data.keys.map((k, i) => `${i + 1}. ${k}`).join('<br>');
+                keySpan.innerHTML = `🔐 Топ вероятных ключей:<br><strong>${keysHtml}</strong>`;
+            } else {
+                keySpan.innerHTML = `🔐 Вероятный ключ: <strong>Не удалось определить</strong>`;
+            }
+            overallICSpan.innerText = data.ic_analysis.overall_ic.toFixed(4);
+            icPeriodSpan.innerText = data.ic_analysis.suggested_period;
+            kasiskiDiv.innerHTML = '';
+            if (data.kasiski && data.kasiski.length) {
+                for (let ks of data.kasiski) {
+                    const div = document.createElement('div');
+                    div.className = 'kasiski-item';
+                    div.innerHTML = `<strong>Подстрока "${ks.substring}"</strong> встречается на позициях: ${ks.positions.join(', ')}<br>
+                                     Расстояния: ${ks.distances.join(', ')} → НОД = ${ks.possible_length}`;
+                    kasiskiDiv.appendChild(div);
+                }
+            } else {
+                kasiskiDiv.innerHTML = '<p>Повторяющихся фрагментов не найдено.</p>';
+            }
+            autocorrPeriodSpan.innerText = data.autocorr.suggested_period;
+            const shifts = Object.entries(data.autocorr.shift_scores);
+            shifts.sort((a,b)=>parseInt(a[0])-parseInt(b[0]));
+            autocorrPlotDiv.innerHTML = '<table style="width:100%"><tr><th>Сдвиг</th><th>Совпадения</th></tr>' +
+                shifts.map(([s,score]) => `<tr><td>${s}</td><td>${score}</td></tr>`).join('') + '</table>';
+            resultArea14.style.display = 'block';
+        } catch(e) { alert('Ошибка: '+e.message); }
+        finally { analyzeBtn14.innerHTML = '🔎 Выполнить полиалфавитный анализ'; analyzeBtn14.disabled = false; }
+    }
+
+    // LAB14: файл, буфер
+    document.getElementById('fileInput14').addEventListener('change', e => { if(e.target.files[0]){ const r=new FileReader(); r.onload=ev=>textarea14.value=ev.target.result; r.readAsText(e.target.files[0]); } });
+    document.getElementById('pasteBtn14').addEventListener('click', async () => { try { textarea14.value = await navigator.clipboard.readText(); } catch(e){ alert('Ошибка буфера'); } });
+    analyzeBtn14.addEventListener('click', analyze14);
+
+    // Переключение вкладок
+    const tabs = document.querySelectorAll('.tab');
+    const contents = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.getAttribute('data-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            contents.forEach(c => c.classList.remove('active'));
+            document.getElementById(target).classList.add('active');
+        });
+    });
+</script>
+</body>
+</html>
